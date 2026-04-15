@@ -1,0 +1,429 @@
+\documentclass[11pt]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{enumitem}
+\usepackage{float}
+\usepackage[hidelinks]{hyperref}
+\usepackage{placeins}
+
+\setlength{\textfloatsep}{10pt}
+\setlength{\floatsep}{10pt}
+\setlength{\intextsep}{10pt}
+
+\usepackage{indentfirst}
+\setlength{\parindent}{2em}
+
+\title{Persistent One-Sided Order Books from Learned Trading Behavior}
+\author{Jean-Paul Vestjens \\ \texttt{vestjejj@rose-hulman.edu}}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+The paper studied how increasing the participation of reinforcement learning (RL) trading agents affects liquidity in a limit order book. Using an agent-based market simulation, I vary the fraction of reinforcement learning agents and observe a nonlinear increase in persistent one-sided order book states, where either the best bid or best ask disappears and the mid-price becomes undefined.
+
+I show that these failures tend to emerge in regimes where these agents remain active, not solely driven by trivial policy collapse into inactivity. A targeted anti-degeneracy intervention reduces extreme inactivity but does not remove the one-sided states. This suggests that the effect is driven by broader changes in agent behavior than by simple inactivity.
+
+I further find that inventory constraints significantly reduce both the frequency and persistence of these one-sided order book states, restoring more stable two-sided liquidity. Together, these results identify a failure mode in which learned trading behavior degrades liquidity and show that simple structural constraints can mitigate the impact.
+\end{abstract}
+
+\section{Introduction}
+
+Financial markets rely on continuous two-sided liquidity, where both buy and sell orders are present in the limit order book. The availability of both sides is what allows prices to form through matching and keep spreads finite. When liquidity disappears from one side of the book, price formation breaks down and standard measures such as mid-price and spreads therefore become undefined. Understanding how such failures emerge is a central problem in market microstructure.
+
+Recent work has increasingly explored the use of reinforcement learning (RL) in trading and market making tasks. RL agents have been shown to learn effective strategies for order placement, inventory control, and execution in limit order book (LOB) environments (Spooner et al., 2018; Nevmyvaka et al., 2006). Many of these approaches rely on historical market replay or assume negligible market impact, which limits their ability to capture system-level effects that arise when multiple adaptive agents interact (Spooner et al. 2018). As a result, while RL-based strategies can optimize individual performance, they do not typically address how learning behavior alters the overall market structure.
+
+Prior work in agent-based modeling has shown that interactions between heterogeneous trading agents can generate endogenous market instability. Specifically, studies have shown that coordination effects such as herding can reduce matching, lower liquidity, and effectively one-sided order flow (Lussange et al., 2024). More broadly, both academic and policy-oriented work has emphasized that algorithmic trading systems may withdraw liquidity under stress, amplifying market instability (Farmer and Foley, 2009; Bank of England, 2020; IMF, 2023). These findings show that liquidity provision is not fixed, but instead emerges from agent behavior and can degrade under certain conditions.
+
+Despite this, there is limited work that directly study how learned trading behavior affects the presence of both sides of the LIMIT ORDER BOOK itself, rather than downstream outcomes such as volatility or volume. In particular, it remains unclear whether increasing the participation of learning-based agents leads to persistent states in which one side of the book disappears completely, and how such failures relate to agent-level behavior.
+
+In this paper, I study how increasing the fraction of reinforcement learning agents in a LIMIT ORDER BOOK affects liquidity provision and the market structure. Using an agent-based simulation, I vary the proportion of RL agents and measure the emergence, frequency, and persistence of one-sided order book states. I focus mostly on failures at the top of the book, where the best bid or best ask is absent and price formation becomes undefined.
+
+I show that there is a nonlinear increase in persistent one-sided states as the fraction of RL agents increases. Importantly, these failures occur even when agents remain active, showing that the effect is not driven by trivial inactivity. Instead, the behavior is consistent with a form of endogenous liquidity withdrawal. I also show that inventory constraints can significantly reduce both the persistence and frequency of these failures, partially restoring the two-sided liquidity.
+
+These findings identify a mechanism through which learned trading behavior can degrade the market structure and highlight the importance of incorporating system-level constraints when designing learning-based trading agents.
+
+\section{Methods / Environment Setup}
+
+\subsection{Market Environment}
+
+All experiments were conducted using the ABIDES-based market simulation (Byrd et al., 2020). The simulation used a frozen RMSC-style configuration that consists of 102 agents interacting through a central exchange within a discrete-event kernel. The ABIDES framework allows for realistic LIMIT ORDER BOOK dynamics by modeling message-level interactions between agents and the exchange and has been widely used in studies of market microstructure and algorithmic trading.
+
+The market includes a latent fundamental value generated by a Gaussian random-walk oracle. Agents observe and act based on market conditions but do not have direct access to the fundamental value.
+
+In this baseline configuration ($\phi = 0$), the agent population consists of:
+\begin{itemize}[leftmargin=2em]
+    \item 80 noise traders
+    \item 20 value traders
+    \item 2 adaptive market makers
+\end{itemize}
+
+\subsection{Control parameters: RL Participation}
+
+The primary experimental control parameter is the fraction of reinforcement learning (RL) agents, denoted by $\phi$. Increasing $\phi$ replaces a portion of the noise traders with these RL agents, while keeping value traders and market makers fixed. This ensures that changes in market behavior can be attributed specifically to the introduction of learned agents rather than changes in the overall structure of the market.
+
+The experiment is run on the following grid:
+\[
+\phi \in \{0.00, 0.05, 0.10, 0.20, 0.30, 0.40, 0.50\}.
+\]
+
+\subsection{Agent Roles and Liquidity Provision}
+
+Liquidity in the market is provided by the non-RL agents through a mix of passive and active behaviors:
+\begin{itemize}[leftmargin=2em]
+    \item Noise traders submit near-touch limit orders
+    \item Value traders combine aggressive market orders with passive limit orders
+    \item Adaptive market makers continuously provide two-sided limit quotes
+\end{itemize}
+
+RL agents do not directly place passive limit orders. Instead, they interact with the market through aggressive market orders, meaning they primarily consume liquidity rather than provide it.
+
+\subsection{RL Action and State Space}
+
+Each RL agent operates with a discrete action space consisting of three actions:
+\begin{itemize}[leftmargin=2em]
+    \item 0 = sell
+    \item 1 = hold
+    \item 2 = buy
+\end{itemize}
+
+A buy or sell action results in the submission of a market order of fixed size (default size of 1), while a hold action results in no orders being submitted.
+
+The state vector includes:
+\begin{itemize}[leftmargin=2em]
+    \item A rolling window of recent log returns
+    \item Current bid-ask spread
+    \item Order book imbalance
+    \item Current inventory
+\end{itemize}
+
+The return window has a default length of 10, so the final vector is of dimension 13.
+
+\subsection{Reward Function}
+
+Rewards are computed per decision step and reflect the changes in marked-to-market wealth adjusted for risk and behavior penalties.
+
+The function is defined as:
+\[
+r_t = \Delta W_t - \lambda_q \cdot 100 \cdot q_t^2 - P_{\text{hold}} - P_{\text{anti-degeneracy}}
+\]
+
+Where:
+\begin{itemize}[leftmargin=2em]
+    \item $\Delta W_t$ is the change in market-to-market wealth
+    \item $q_t$ is the agent’s inventory
+    \item $\lambda_q$ controls the quadratic inventory penalty
+    \item $P_{\text{hold}}$ is an optional penalty for remaining inactive
+    \item $P_{\text{anti-degeneracy}}$ penalizes extended sequences of hold actions
+\end{itemize}
+
+Rewards are applied at each decision transition and at the terminal step of each episode
+
+\subsection{Inventory Constraints}
+
+Inventory is tracked directly from each agent’s holdings. When the inventory constraints are enabled, actions that would violate a predefined inventory cap are automatically converted into hold actions before order submission.
+
+This prevents agents from exceeding position limits while leaving the remaining market dynamics unchanged, allowing for inventory constraints to act as a controlled intervention on agent behavior.
+
+\subsection{Anti-Degeneracy Intervention}
+
+To prevent trivial policy collapse into inactivity, some experiments include an anti-degeneracy intervention based on consecutive hold actions.
+
+A hold streak is defined as the number of consecutive timesteps in which an agent selects the hold action. After a configurable grace period, an increasing penalty is applied to discourage extended inactivity. This penalty is incorporated directly into the reward function.
+
+\subsection{Definition of One-Sided Order Book States}
+
+The primary failure mode studied in this work is the one-sided order book state.
+
+A market state is considered one-sided when either the best bid or best ask is missing in the top-of-book snapshot. In the data, this means:
+\begin{itemize}[leftmargin=2em]
+    \item Missing bid or ask values are recorded as NaN
+    \item Mid-price is undefined when either side is missing
+    \item Spread is undefined when either side is missing
+\end{itemize}
+
+I distinguish between:
+\begin{itemize}[leftmargin=2em]
+    \item True one-sided states, where exactly one side is missing
+    \item Fully empty states, where both sides are missing
+\end{itemize}
+
+This definition focuses directly on the structure of the order book rather than derived quantities like volatility or volume.
+
+\subsection{Experiment Protocol}
+
+I evaluate system behavior through a sweep over $\phi$-sweep experiments. For each value of $\phi$, simulations are run for multiple episodes with independent random seeds.
+
+The main experimental configuration includes:
+\begin{itemize}[leftmargin=2em]
+    \item 50 episodes per $\phi$
+    \item Evaluation seeds: 7, 8, 9
+    \item Both greedy and stochastic policy evaluation modes
+\end{itemize}
+
+In addition to the baseline (no inventory constraints), I evaluate:
+\begin{itemize}[leftmargin=2em]
+    \item Inventory-constrained settings (caps of 50 and 20 units)
+    \item Trained RL policies versus random baseline policies
+    \item Anti-degeneracy interventions
+\end{itemize}
+
+Results are aggregated across seeds and episodes, and metrics are computed on logged market data, including measures of one-sided order book frequency, persistence, and related market quality indicators.
+
+\section{Results}
+
+\subsection{Emergence of One-Sided Order Book States}
+
+I first examine how the frequency of one-sided order book states changes as the proportion of RL agents ($\phi$) increases.
+
+As shown in Figure~\ref{fig:one-sided-book}, the fraction of timesteps in which the order book is one-sided remains low for $\phi <= 0.2$, indicating stable two-sided liquidity in these regimes. However, when $\phi$ goes beyond 0.2, the system shows a sharp nonlinear increase in one-sided states. This effect becomes pronounced around $\phi = 0.4$, where the order book is one-sided for over half of observed timesteps.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.8\textwidth]{figure1.png}
+    \caption{One-Sided Order Book Fraction vs $\phi$. Fraction of timesteps in which the order book is one-sided (i.e. either the best bid or best ask is missing) as a function of $\phi$ for both greedy and stochastic evaluation modes.}
+    \label{fig:one-sided-book}
+\end{figure}
+
+A similar pattern is observed in the fraction of timesteps where mid-price is undefined. As shown in Figure~\ref{fig:undefined-midprice}, the undefined mid-price fraction closely tracks one-sided book fractions across all values of $\phi$, confirming that these failures correspond to breakdowns in price formation rather than measurement artifacts.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.8\textwidth]{figure2.png}
+    \caption{Undefined Mid-price Fraction vs $\phi$. Fraction of timesteps in which the mid-price is undefined due to the absence of either the best bid or best ask.}
+    \label{fig:undefined-midprice}
+\end{figure}
+
+At $\phi = 0.5$, both metrics drop sharply. However, as shown later, this does not reflect improved market conditions but instead corresponds to a regime of near-total inactivity.
+\FloatBarrier
+
+\subsection{Persistence of One-Sided States}
+
+I next analyze the duration of one-sided states to determine whether these failures are transient or persistent.
+
+As shown in Figure~\ref{fig:max-consecutive-duration}, the maximum consecutive duration of one-sided states increases significantly with $\phi$, particularly between $\phi = 0.3$ and $\phi = 0.4$. At higher values, the system experiences extended periods where one side of the book remains absent.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.8\textwidth]{figure3.png}
+    \caption{Max Consecutive One-Sided Duration vs $\phi$. Maximum length of consecutive one-sided order book states observed during each simulation.}
+    \label{fig:max-consecutive-duration}
+\end{figure}
+
+To further characterize persistence, I examine upper quantiles of episode duration. As shown in Figure~\ref{fig:p90-duration}, the 90th percentile of one-sided duration increases sharply in the same regime, confirming that these failures are not isolated events but sustained structural states.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.8\textwidth]{figure4.png}
+    \caption{P90 One-Sided Episode Duration vs $\phi$. 90th percentile duration of one-sided episodes, indicating the persistence of liquidity failures.}
+    \label{fig:p90-duration}
+\end{figure}
+
+\FloatBarrier
+
+\subsection{Mechanism}
+
+To understand the mechanism behind these failures, I examine agent behavior through action distributions and inactivity rates.
+
+As shown in Figure~\ref{fig:action-fractions}, agent action distributions shift with increasing $\phi$. While agents continue to take buy and sell actions at intermediate values of $\phi$, the frequency of hold actions increases substantially.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.8\textwidth]{figure5.png}
+    \caption{RL Action Fractions vs $\phi$. Distributions of buy, sell, and hold actions for RL agents under greedy and stochastic evaluation modes.}
+    \label{fig:action-fractions}
+\end{figure}
+
+This shift is reflected in overall inactivity levels. As shown in Figure~\ref{fig:inactivity}, inactivity increases significantly with $\phi$, particularly at $\phi = 0.2$ and $\phi = 0.5$.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.8\textwidth]{figure6.png}
+    \caption{Inactivity Fraction vs $\phi$. Fraction of timesteps in which agents select the hold action, indicating reduced participation.}
+    \label{fig:inactivity}
+\end{figure}
+
+Importantly, in the intermediate regime ($\phi \approx 0.3$-$0.4$), agents remain partially active while still generating high levels of one-sided states. This indicates that the observed failures are not solely due to inactivity but are instead associated with reduced and uneven participation consistent with endogenous liquidity withdrawal.
+
+At $\phi = 0.5$, inactivity approaches 100\%, indicating that agents largely cease interaction with the market. This suppresses one-sided states but also eliminates meaningful trading activity, representing a degenerate regime rather than a recovery stable liquidity.
+
+\FloatBarrier
+
+\subsection{Asymmetry in Book Failure}
+
+I further examine whether failures occur symmetrically across both sides of the order book.
+
+As shown in Figure~\ref{fig:missing-best-ask} and Figure~\ref{fig:missing-best-bid}, both the best bid and best ask are increasingly likely to be missing as $\phi$ increases. However, the ask side is absent more frequently at high values of $\phi$, indicating a mild asymmetry in liquidity withdrawal.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.8\textwidth]{figure7.png}
+    \caption{Missing Best Ask Fraction vs $\phi$. Fraction of timesteps in which the best ask is absent from the order book.}
+    \label{fig:missing-best-ask}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.8\textwidth]{figure8.png}
+    \caption{Missing Best Bid Fraction vs $\phi$. Fraction of timesteps in which the best bid is absent from the order book.}
+    \label{fig:missing-best-bid}
+\end{figure}
+
+\FloatBarrier
+
+\subsection{Effects of Inventory Constraints}
+
+To evaluate the role of inventory exposure, I introduce inventory constraints and repeat the $\phi$-sweep.
+
+As shown in Figure~\ref{fig:inventory-cap-frequency}, adding an inventory constraint significantly reduces the frequency of one-sided states across all values of $\phi$. The unconstrained system exhibits a sharp spike at $\phi = 0.4$, while both constrained settings (cap = 50 and cap = 20) suppress this effect substantially.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.8\textwidth]{figure9.png}
+    \caption{One-Sided Book Fraction vs $\phi$ by Inventory Cap. Comparison of one-sided-book frequency under different inventory constraint levels.}
+    \label{fig:inventory-cap-frequency}
+\end{figure}
+
+Persistence is also reduced under inventory constraints. As shown in Figure~\ref{fig:inventory-cap-duration}, the maximum duration of one-sided states decreases substantially when inventory limits are applied.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.8\textwidth]{figure10.png}
+    \caption{Max Consecutive One-Sided Duration vs $\phi$ by Inventory Cap. Maximum duration of one-sided states under different inventory constraint levels.}
+    \label{fig:inventory-cap-duration}
+\end{figure}
+
+These results indicate that inventory risk plays a central role in the observed liquidity withdrawal behavior.
+
+\FloatBarrier
+
+\subsection{Trained Policies vs Random Baseline}
+
+To determine whether the observed effects arise from learned behavior, I compare trained RL agents with a random baseline policy.
+
+As shown in Figure~\ref{fig:policy-type}, the random baseline exhibits a smoother and more monotonic increase in one-sided states as $\phi$ increases. In contrast, the trained policy produces a sharper, nonlinear spike, particularly at $\phi = 0.4$.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.8\textwidth]{figure11.png}
+    \caption{One-Sided Book Fraction vs $\phi$ by Policy Type. Comparison between trained RL policies and random baseline agents.}
+    \label{fig:policy-type}
+\end{figure}
+
+This difference indicates that the observed failure mode is not simply a consequence of replacing noise traders with arbitrary agents but instead arises from the structure of learned policies.
+
+\FloatBarrier
+
+\subsection{Summary of Findings}
+
+Across all experiments, I observe a consistent pattern. Increasing RL participation leads to a nonlinear rise in one-sided order book states, with the strongest effects occurring at intermediate values of $\phi$. These states become persistent, indicating sustained breakdowns in liquidity rather than transient imbalances.
+
+The results show that these failures are associated with reduced and uneven participation rather than complete inactivity. At very high levels of RL participation, the system transitions into a degenerate regime characterized by near-total inactivity, suppressing failures but eliminating meaningful trading.
+
+Inventory constraints significantly mitigate both the frequency and persistence of one-sided states, demonstrating that inventory caps are a key driver of the observed behavior. Additionally, the effect is specific to learned policies and not reproduced by random baselines.
+
+Together, these findings support the existence of an endogenous failure mode in which learned trading behavior degrades liquidity by altering participation in the limit order book.
+
+\section{Discussion}
+
+The main result of this paper is that increasing the participation of learned trading agents can produce persistent one-sided order book states in a limit order book environment. These failures are not well described as a simple increase in volatility or spread alone. Instead, the core failure object is more structural: one side of the top of the book disappears, and mid-price formation becomes undefined. This provides a more direct characterization of market breakdown than downstream measures such as return volatility or trading volume.
+
+This framing helps distinguish the present results from much of the existing reinforcement learning literature in trading. Prior work has primarily focused on optimizing execution, inventory control, or market making performance at the level of individual agents (Spooner et al., 2018; Nevmyvaka et al., 2006). In many of these settings, the market is treated as fixed through historical replay or assumptions of negligible market impact. As discussed by Balch et al., such replay-based approaches limit the ability to capture feedback effects and system-level dynamics that arise when multiple agents interact (Balch et al., 2019). As a result, while RL-based strategies can optimize individual outcomes, they often do not address how learning behavior alters the overall structure of the market.
+
+At the same time, the broader idea that agent behavior can degrade liquidity is well established. Agent-based modeling has shown that interactions between heterogeneous traders can generate endogenous instability, particularly when coordination effects such as herding emerge. Lussange et al. demonstrate that learning-driven herding can lead to effectively one-sided order books with reduced matching and lower trading volume (Lussange et al., 2024). More broadly, both academic and policy-oriented work has emphasized that liquidity provision can deteriorate under stress, as market participants withdraw from providing liquidity (Farmer and Foley, 2009; Bank of England, 2020; IMF, 2023). These results reinforce the idea that liquidity is not exogenous but instead emerges from agent behavior.
+
+The contribution of this paper is therefore more specific. First, it focuses directly on top-of-book failure, rather than treating instability only through aggregate outcomes such as volatility or volume. Second, it introduces a clear control parameter (the fraction of RL agents, $\phi$) and shows that the system exhibits a threshold-like regime in which one-sided states become frequent and persistent. Third, it identifies a mitigation mechanism: inventory constraints significantly reduce both the frequency and persistence of these failures. Taken together, these results support a liquidity-withdrawal failure mode in which market structure degrades before the market becomes fully inactive.
+
+The role of inventory constraints is particularly important. In the unconstrained setting, failures become severe at intermediate levels of RL participation. When inventory caps are introduced, both the frequency and persistence of one-sided states are heavily reduced. This suggests that the mechanism is not simply that RL agents behave suboptimally, but that the interaction between learned agents and inventory exposure plays a central role. This interpretation is consistent with prior RL market-making work, where inventory control is a key driver of agent behavior, and with broader concerns that risk constraints can lead agents to withdraw from the market under certain conditions (Spooner et al., 2018; IMF, 2023).
+
+The anti-degeneracy results further refine this interpretation. At very high levels of RL participation, particularly around $\phi = 0.5$, the system moves into a regime of near-total inactivity. This suppresses one-sided states but also eliminates meaningful market interaction. However, when inactivity is penalized, one-sided states persist at intermediate values of $\phi$. This indicates that the observed failures are not reducible to trivial policy collapse. Instead, they reflect a broader shift in participation behavior, where agents remain active but fail to sustain stable two-sided liquidity.
+
+The comparison with the random baseline strengthens this conclusion. The random baseline produces a smoother and more monotonic degradation in market quality, whereas the trained policy generates a sharper and more concentrated spike in one-sided states. This indicates that the observed effect is not simply due to replacing noise traders with arbitrary agents. Rather, it arises from the structure of learned policies. While Lussange et al. report one-sided order flow under herding, their mechanism is based on imitation and coordination. In contrast, the results here are more consistent with reduced and uneven participation driven by learned behavior and inventory exposure (Lussange et al., 2024).
+
+These findings should be interpreted with appropriate caution. The experiments are conducted in a single ABIDES-based simulation environment (Byrd et al., 2020) and rely on a specific RL training setup. As a result, the paper does not claim that these effects represent a universal property of financial markets. Instead, it identifies a reproducible failure mode within a realistic and widely used simulation framework. ABIDES is designed to capture detailed market microstructure and agent interaction, but results obtained in simulation do not automatically generalize to real-world markets.
+
+Overall, the results highlight an important point: learned trading agents should not be evaluated solely on individual performance metrics. System-level outcomes matter. A policy that appears effective in isolation may still degrade liquidity when many such agents interact in the same market. This aligns with broader concerns in both academic and policy literature that algorithmic and AI-driven trading systems can introduce new forms of systemic risk when deployed at scale.
+
+\section{Limitations}
+
+\subsection{Simulation Environment}
+
+The results of this paper are obtained within a single simulation environment based on the ABIDES platform (Byrd et al., 2020). While ABIDES gives a high-fidelity, message-level limit order book simulation, it is only an approximation of real financial markets.
+
+The agent population, matching rules, and oracle dynamics are all specified by the simulation design. In particular, the latent fundamental value follows a simple stochastic process, and agent behaviors are limited to predefined classes. As a result, the findings should be interpreted as demonstrating a reproducible failure mode within this environment, rather than a universal property of real-world markets.
+
+\subsection{Restricted Agent Behavior}
+
+A structural limitation of the current setup is that RL agents do not provide passive liquidity. Their action space is limited to aggressive market orders (buy, sell) and inactivity (hold), meaning they primarily consume liquidity rather than supply it.
+
+This design choice affects how the results should be interpreted. Increasing $\phi$ effectively replaces liquidity-providing noise traders with agents that do not directly contribute to two-sided quoting. As a result, part of the observed degradation in market structure reflects a shift in market composition.
+
+However, the observed effects are not consistent with a purely mechanical replacement story. In particular, the nonlinear spike in one-sided order book states at intermediate values of $\phi$, along with the differences between trained policies and random baselines, indicate that learned behavior plays a central role in shaping market outcomes.
+
+These results therefore suggest that the failure is not solely driven by the absence of passive liquidity provision, but by how learned agents interact with the market given this constraint. Nonetheless, the current setup does not compare scenarios in which RL agents actively provide liquidity, such as market-making strategies, and future work should extend the analysis to these settings.
+
+\subsection{Policy and Reward Design Dependence}
+
+The learned behavior depends directly on the reward function and training configuration. In this work, the reward includes mark-to-market wealth changes, inventory penalties, and optional inactivity penalties. Different reward specifications or hyperparameter choices could produce qualitatively different agent behavior.
+
+In particular, the emergence of inactivity at high values of $\phi$ suggests that the learned policy may converge to degenerate strategies under certain conditions. Although anti-degeneracy penalties reduce this effect, they do not eliminate it entirely. This indicates that the observed dynamics are sensitive to policy design and should not be interpreted as invariant across all RL formulations.
+
+\subsection{Limited Exploration of Parameter Space}
+
+The experiments focus on a fixed market configuration with a specific agent composition and a discrete set of $\phi$ values. While the results show consistent behavior across this grid, they do not establish robustness across alternative environments, agent mixes, or market conditions.
+
+In particular, the results are based on replacing noise traders with RL agents, while keeping value traders and market makers fixed. Different replacement schemes or alternative baseline populations could lead to different outcomes. Similarly, the analysis does not explore sensitivity to key parameters such as order size, time horizon, or market volatility.
+
+\subsection{Interpretation of One-Sided States}
+
+The definition of one-sided order book states is based on the absence of the best bid or best ask in logged top-of-book snapshots. While this provides a clear and measurable failure condition, it is a relatively strict definition.
+
+In real markets, liquidity may degrade without completely disappearing from one side of the book. Therefore, the results should be interpreted as capturing an extreme form of liquidity failure, rather than the full spectrum of market degradation.
+
+\subsection{External Validity and Real-World Implications}
+
+These findings do not imply that real financial systems will exhibit identical behavior under the introduction of RL-based trading systems. Real markets include additional structure, such as regulatory constraints, diverse participant objectives, and institutional risk management systems, which are not fully captured in the simulation.
+
+However, the results are consistent with broader concerns in the literature that algorithmic and AI-driven trading systems may contribute to liquidity withdrawal under certain conditions (IMF, 2023). The contributions of this work are therefore best understood as identifying a plausible mechanism that warrants further investigation, rather than making direct claims about real-world market outcomes.
+
+\section{Conclusion}
+
+This paper studies how increasing the participation of reinforcement learning (RL) agents affects liquidity in a limit order book. Using an agent-based market simulation, I vary the fraction of RL agents and analyze the resulting changes in market structure.
+
+I find that increasing RL participation leads to a nonlinear rise in persistent one-sided order book states, where one side of the book disappears and price information therefore becomes undefined. These failures are most pronounced at intermediate levels of RL participation and are characterized by sustained periods of missing liquidity rather than short-lived imbalances.
+
+Importantly, these effects are not solely driven by trivial inactivity. Agents remain partially active in the regimes where failures are most severe, indicating that the breakdown is associated with reduced and uneven participation rather than complete withdrawal from the market. At very high levels of RL participation, the system transitions into a degenerate regime of near-total inactivity, which suppresses one-sided states but eliminates meaningful trading activity.
+
+I also show that inventory constraints significantly reduce both the frequency and persistence of one-sided states. This highlights the role of inventory exposure in shaping agent behavior and suggests that simple structural constraints can mitigate the impact of learned trading strategies on market stability.
+
+Overall, the results identify a failure mode in which learned trading behavior degrades liquidity at the level of market structure. This suggests that evaluating trading agents solely on individual performance is insufficient, and that system-level effects should be considered when designing and deploying learning-based trading systems. Future work should extend this analysis to settings where learning agents actively provide liquidity, as well as to alternative market environments and agent compositions.
+
+\section*{References}
+
+\begin{itemize}[leftmargin=2em]
+    \item Nevmyvaka et al., 2006 - Reinforcement Learning for Optimized Trade Execution (\url{https://www.cis.upenn.edu/~mkearns/papers/rlexec.pdf})
+
+    \item Spooner et al., 2018 - Market Making via Reinforcement Learning (AAMAS) (\url{https://livrepository.liverpool.ac.uk/3020822/1/MM_aamas.pdf?utm})
+
+    \item Balch et al., 2019 - How to Evaluate Trading Strategies: Single Agent Market Replay or Multiple Agent Interactive Simulation? (\url{https://www.jpmorgan.com/content/dam/jpm/cib/complex/content/technology/ai-research-publications/pdf-12.pdf?utm})
+
+    \item Lussange et al., 2024 (or 2021 depending on version) - Learning Behaviors and Mesoscale Effects in Multi-Agent Market Simulation (PLOS One) (\url{https://journals.plos.org/plosone/article?id=10.1371%2Fjournal.pone.0301141&utm})
+
+    \item Farmer \& Foley, 2009 - The Economy Needs Agent-Based Modelling (Nature) (\url{https://www.inet.ox.ac.uk/publications/the-economy-needs-agent-based-modelling})
+
+    \item Bank of England, 2020 - The Deeds of Speed: An Agent-Based Model of Market Liquidity and Flash Episodes (\url{https://www.bankofengland.co.uk/-/media/boe/files/working-paper/2018/the-deeds-of-speed-an-agent-based-model-of-market-liquidity-and-flash-episodes.pdf?utm})
+
+    \item IMF, 2023 - Global Financial Stability Report – AI and Financial Stability (\url{https://www.imf.org/en/publications/gfsr/issues/2023/10/10/global-financial-stability-report-october-2023?utm})
+
+    \item Byrd et al., 2020 - ABIDES: Towards High-Fidelity Market Simulation for AI Research (\url{https://par.nsf.gov/servlets/purl/10185795})
+
+    \item Avellaneda \& Stoikov, 2008 - High-Frequency Trading in a Limit Order Book (\url{https://people.orie.cornell.edu/sfs33/LimitOrderBook.pdf?utm})
+\end{itemize}
+
+\end{document}
