@@ -23,6 +23,18 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--start-seed", type=int, default=7)
     parser.add_argument("--training-seeds", type=str, default="")
     parser.add_argument("--evaluation-seeds", type=str, default=",".join(str(seed) for seed in DEFAULT_EVALUATION_SEEDS))
+    parser.add_argument(
+        "--evaluation-seed-count",
+        type=int,
+        default=0,
+        help="Convenience option for larger seed sweeps. When > 0, overrides --evaluation-seeds with consecutive seeds.",
+    )
+    parser.add_argument(
+        "--evaluation-seed-start",
+        type=int,
+        default=7,
+        help="First seed used with --evaluation-seed-count.",
+    )
     parser.add_argument("--evaluation-interval", type=int, default=5)
     parser.add_argument("--checkpoint-interval", type=int, default=5)
     parser.add_argument("--num-agents", type=int, default=102)
@@ -57,7 +69,11 @@ def main() -> None:
     args = build_parser().parse_args()
     phi_grid = parse_float_list(args.phi_grid)
     training_seeds = parse_int_list(args.training_seeds)
-    evaluation_seeds = parse_int_list(args.evaluation_seeds)
+    evaluation_seeds = (
+        list(range(args.evaluation_seed_start, args.evaluation_seed_start + args.evaluation_seed_count))
+        if args.evaluation_seed_count > 0
+        else parse_int_list(args.evaluation_seeds)
+    )
     enable_passive_quotes = str(args.rl_enable_passive_quotes).strip().lower() in {"1", "true", "yes", "on"}
     output_dir = Path(args.output_dir) if args.output_dir else default_experiment_output_dir()
 

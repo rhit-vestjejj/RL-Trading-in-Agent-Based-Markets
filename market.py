@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import os
+import time
 from typing import Callable, Dict, List, Optional, Sequence
 
 import numpy as np
@@ -75,6 +77,10 @@ class MarketSimulator:
         kernel = Kernel(
             random_state=kernel_seed,
             skip_log=True,
+            log_dir=(
+                f"skip_log_seed_{self.config.seed}_"
+                f"pid_{os.getpid()}_ns_{time.time_ns()}"
+            ),
             **subdict(
                 self.config_state.kernel_config,
                 [

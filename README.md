@@ -118,6 +118,68 @@ python3 run_phi_experiment.py \
 
 This produces an experiment folder with config, summary tables, plots, and a markdown report.
 
+For a paper-facing rerun with more evaluation seeds, use the seed-count shortcut instead of hand-writing a long seed list:
+
+```bash
+python3 run_phi_experiment.py \
+  --phi-grid 0.00,0.05,0.10,0.20,0.30,0.40,0.50 \
+  --episodes 50 \
+  --evaluation-seed-count 20 \
+  --evaluation-seed-start 7 \
+  --evaluation-interval 5 \
+  --checkpoint-interval 5 \
+  --rl-liquidity-mode mixed \
+  --rl-quoter-split 0.50 \
+  --output-dir experiments/phi_sweep_20seed_mixed
+```
+
+The phi-sweep summary aggregates across evaluation seeds only and reports mean, standard deviation, standard error, and 95% confidence intervals for numeric seed-level metrics.
+
+### Run reviewer robustness controls
+
+The reviewer-response control compares trained RL behavior against a nonlearned matched-composition policy under the same `phi`, RL taker/quoter split, and liquidity mode. This is designed to address the passive/aggressive order-flow confound more directly than a single 50/50 mixed setting. It does not prove aggregate passive quoting is perfectly fixed; it tests whether learned behavior differs from a nonlearned policy at the same mechanical composition.
+
+Use existing trained checkpoints plus a 10-seed matched random control:
+
+```bash
+python3 run_reviewer_robustness.py \
+  --trained-experiment-dir experiments/mixed_full_reward_shaped \
+  --phi-grid 0.00,0.05,0.10,0.20,0.30,0.40,0.50 \
+  --quoter-splits 0.00,0.25,0.50,0.75,1.00 \
+  --evaluation-seeds 7,8,9,10,11,12,13,14,15,16 \
+  --evaluation-mode greedy \
+  --output-dir experiments/reviewer_robustness_greedy
+```
+
+If you want a cheaper composition-only sweep without loading trained policies:
+
+```bash
+python3 run_reviewer_robustness.py \
+  --no-trained \
+  --phi-grid 0.00,0.10,0.30,0.50 \
+  --quoter-splits 0.00,0.25,0.50,0.75,1.00 \
+  --evaluation-seeds 7,8,9,10,11,12,13,14,15,16 \
+  --output-dir experiments/reviewer_robustness_matched_random
+```
+
+Key outputs:
+
+```text
+summaries/composition_control_by_seed.csv
+summaries/composition_control_summary.csv
+summaries/one_sided_onset_event_study.csv
+plots/mechanism_action_quote_panel.png
+plots/phi_0_5_shutdown_diagnostics.png
+plots/market_quality_panel.png
+plots/one_sided_book_fraction_with_ci.png
+plots/average_spread_with_ci.png
+plots/average_depth_with_ci.png
+plots/volatility_with_ci.png
+plots/zero_return_fraction_with_ci.png
+plots/trade_timestep_count_with_ci.png
+reviewer_robustness_report.md
+```
+
 ### Generate diagnostics
 
 Baseline realism:

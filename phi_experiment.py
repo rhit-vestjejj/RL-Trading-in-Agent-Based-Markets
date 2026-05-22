@@ -230,6 +230,21 @@ def aggregate_mode_results(
     ):
         if column_name in episode_frame.columns:
             _add_numeric_summary(aggregate, prefix, episode_frame[column_name])
+    if {"buy_fraction", "sell_fraction"}.issubset(episode_frame.columns):
+        _add_numeric_summary(
+            aggregate,
+            "evaluation_signed_action_imbalance",
+            pd.to_numeric(episode_frame["buy_fraction"], errors="coerce")
+            - pd.to_numeric(episode_frame["sell_fraction"], errors="coerce"),
+        )
+    if {"quote_bid_fraction", "quote_ask_fraction", "quote_both_fraction"}.issubset(episode_frame.columns):
+        _add_numeric_summary(
+            aggregate,
+            "quote_activity_fraction",
+            pd.to_numeric(episode_frame["quote_bid_fraction"], errors="coerce").fillna(0.0)
+            + pd.to_numeric(episode_frame["quote_ask_fraction"], errors="coerce").fillna(0.0)
+            + pd.to_numeric(episode_frame["quote_both_fraction"], errors="coerce").fillna(0.0),
+        )
     if not diagnostics_frame.empty:
         max_abs_inventory_reached = (
             float(diagnostics_frame["max_abs_inventory_reached"].max())
@@ -275,6 +290,26 @@ def aggregate_mode_results(
                 else 0.0,
             }
         )
+        if (
+            {"seed", "total_rl_aggressive_order_count", "total_rl_passive_order_count"}.issubset(diagnostics_frame.columns)
+            and {"seed", "num_rl_decisions"}.issubset(episode_frame.columns)
+        ):
+            activity_frame = diagnostics_frame.merge(
+                episode_frame[["seed", "num_rl_decisions"]],
+                on="seed",
+                how="left",
+            )
+            decisions = pd.to_numeric(activity_frame["num_rl_decisions"], errors="coerce").replace(0.0, np.nan)
+            _add_numeric_summary(
+                aggregate,
+                "market_order_submission_rate",
+                pd.to_numeric(activity_frame["total_rl_aggressive_order_count"], errors="coerce") / decisions,
+            )
+            _add_numeric_summary(
+                aggregate,
+                "quote_order_submission_rate",
+                pd.to_numeric(activity_frame["total_rl_passive_order_count"], errors="coerce") / decisions,
+            )
         pipeline_issue_mask = diagnostics_frame.apply(_has_midprice_pipeline_issue, axis=1)
         aggregate["pipeline_issue_seed_count"] = float(pipeline_issue_mask.sum())
         aggregate["pipeline_issue_seed_fraction"] = (
@@ -436,9 +471,41 @@ def save_cross_phi_plots(summary_frame: pd.DataFrame, output_dir: str | Path) ->
         plt.close(fig)
         saved_paths.append(path)
 
-    plot_two_mode_metric("volatility_mean", title="Volatility vs Phi", ylabel="Volatility", filename="volatility_vs_phi.png")
-    plot_two_mode_metric("average_spread_mean", title="Average Spread vs Phi", ylabel="Spread", filename="spread_vs_phi.png")
-    plot_two_mode_metric("average_depth_mean", title="Average Depth vs Phi", ylabel="Depth", filename="average_depth_vs_phi.png")
+    plot_two_mode_metric(
+        "volatility_mean",
+        title="Volatility vs Phi",
+        ylabel="Volatility",
+        filename="volatility_vs_phi.png",
+        with_error_bars=True,
+    )
+    plot_two_mode_metric(
+        "average_spread_mean",
+        title="Average Spread vs Phi",
+        ylabel="Spread",
+        filename="spread_vs_phi.png",
+        with_error_bars=True,
+    )
+    plot_two_mode_metric(
+        "average_depth_mean",
+        title="Average Depth vs Phi",
+        ylabel="Depth",
+        filename="average_depth_vs_phi.png",
+        with_error_bars=True,
+    )
+    plot_two_mode_metric(
+        "average_spread_mean",
+        title="Average Spread with 95% CI vs Phi",
+        ylabel="Spread",
+        filename="average_spread_with_ci_vs_phi.png",
+        with_error_bars=True,
+    )
+    plot_two_mode_metric(
+        "average_depth_mean",
+        title="Average Depth with 95% CI vs Phi",
+        ylabel="Depth",
+        filename="average_depth_with_ci_vs_phi.png",
+        with_error_bars=True,
+    )
     plot_two_mode_metric(
         "one_sided_book_fraction_mean",
         title="One-Sided Book Fraction vs Phi",
@@ -475,12 +542,42 @@ def save_cross_phi_plots(summary_frame: pd.DataFrame, output_dir: str | Path) ->
         title="Zero-Return Fraction vs Phi",
         ylabel="Zero-return fraction",
         filename="zero_return_fraction_vs_phi.png",
+        with_error_bars=True,
     )
     plot_two_mode_metric(
         "inactivity_fraction_mean",
         title="Inactivity Fraction vs Phi",
         ylabel="Fraction",
         filename="inactivity_fraction_vs_phi.png",
+        with_error_bars=True,
+    )
+    plot_two_mode_metric(
+        "evaluation_signed_action_imbalance_mean",
+        title="Signed Action Imbalance vs Phi",
+        ylabel="Buy fraction - sell fraction",
+        filename="signed_action_imbalance_vs_phi.png",
+        with_error_bars=True,
+    )
+    plot_two_mode_metric(
+        "quote_activity_fraction_mean",
+        title="RL Quote Action Fraction vs Phi",
+        ylabel="Quote action fraction",
+        filename="quote_activity_fraction_vs_phi.png",
+        with_error_bars=True,
+    )
+    plot_two_mode_metric(
+        "market_order_submission_rate_mean",
+        title="RL Market Order Submission Rate vs Phi",
+        ylabel="Aggressive orders / RL decision",
+        filename="market_order_submission_rate_vs_phi.png",
+        with_error_bars=True,
+    )
+    plot_two_mode_metric(
+        "quote_order_submission_rate_mean",
+        title="RL Passive Order Submission Rate vs Phi",
+        ylabel="Passive orders / RL decision",
+        filename="quote_order_submission_rate_vs_phi.png",
+        with_error_bars=True,
     )
     plot_two_mode_metric("tail_exposure_mean", title="Tail Exposure vs Phi", ylabel="Tail exposure", filename="tail_exposure_vs_phi.png")
     plot_two_mode_metric("crash_rate_mean", title="Crash Rate vs Phi", ylabel="Crash rate", filename="crash_rate_vs_phi.png")
@@ -520,6 +617,34 @@ def save_cross_phi_plots(summary_frame: pd.DataFrame, output_dir: str | Path) ->
     fig.savefig(action_path, dpi=150)
     plt.close(fig)
     saved_paths.append(action_path)
+
+    fig, axes = plt.subplots(2, 2, figsize=(10, 7), sharex=True)
+    shutdown_metrics = [
+        ("quote_order_submission_rate_mean", "Passive order submissions / RL decision"),
+        ("zero_return_fraction_mean", "Zero-return fraction"),
+        ("nonzero_return_count_mean", "Nonzero return count"),
+        ("inactivity_fraction_mean", "No-trade timestep fraction"),
+    ]
+    for axis, (column_suffix, ylabel) in zip(axes.ravel(), shutdown_metrics):
+        for mode, color in (("greedy", "tab:blue"), ("stochastic", "tab:orange")):
+            column = f"{mode}_{column_suffix}"
+            if column not in ordered.columns:
+                continue
+            axis.plot(ordered["phi"], ordered[column], marker="o", linewidth=1.5, label=mode, color=color)
+        axis.axvline(0.50, color="black", linestyle="--", linewidth=1.0, alpha=0.5)
+        axis.set_ylabel(ylabel)
+        axis.grid(True, alpha=0.3)
+    axes[-1, 0].set_xlabel("phi")
+    axes[-1, 1].set_xlabel("phi")
+    handles, labels = axes[0, 0].get_legend_handles_labels()
+    if handles:
+        fig.legend(handles, labels, loc="lower center", ncol=2)
+    fig.suptitle("Phi = 0.5 Shutdown Diagnostics")
+    fig.tight_layout(rect=(0, 0.08, 1, 0.95))
+    shutdown_path = output_root / "phi_0_5_shutdown_diagnostics.png"
+    fig.savefig(shutdown_path, dpi=150)
+    plt.close(fig)
+    saved_paths.append(shutdown_path)
     return saved_paths
 
 
