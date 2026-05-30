@@ -11,9 +11,11 @@ from ablation import compute_ablation_metrics, parse_ablation_specs, summarize_a
 
 class AblationTests(unittest.TestCase):
     def test_compute_ablation_metrics_on_synthetic_inputs(self) -> None:
+        from abides_core.utils import str_to_ns as _s2ns
+        _sec = _s2ns("1s")
         frame = pd.DataFrame(
             {
-                "time": [0, 1_000_000_000, 2_000_000_000, 3_000_000_000],
+                "time": [0, _sec, 2*_sec, 3*_sec],
                 "midprice": [100.0, 100.02, 100.01, 100.03],
                 "fundamental_value": [100.0, 100.01, 100.00, 100.04],
                 "best_bid": [99.99, 100.00, 99.99, 100.01],

@@ -10,7 +10,7 @@ import numpy as np
 import pandas as pd
 
 from abides_support import bootstrap_abides_paths
-from agents.base import MarketObservation
+from env import MarketObservation
 
 bootstrap_abides_paths()
 

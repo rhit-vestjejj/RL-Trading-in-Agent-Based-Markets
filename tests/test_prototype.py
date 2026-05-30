@@ -101,8 +101,12 @@ class PrototypeTests(unittest.TestCase):
             "fundamental_value",
         }
         self.assertTrue(required_columns.issubset(frame.columns))
-        self.assertEqual(int(frame["time"].diff().dropna().iloc[0]), int(1e9))
-        self.assertTrue((frame["time"].diff().dropna() == int(1e9)).all())
+        # str_to_ns('1s') returns the time unit for 1 second (pandas 3.x uses
+        # microseconds: 1_000_000; older pandas used nanoseconds: 1_000_000_000)
+        from abides_core.utils import str_to_ns
+        one_second = str_to_ns("1s")
+        self.assertEqual(int(frame["time"].diff().dropna().iloc[0]), one_second)
+        self.assertTrue((frame["time"].diff().dropna() == one_second).all())
 
     def test_official_baseline_path_omits_trend_traders(self) -> None:
         config = build_abides_rmsc04_small_v1_config(

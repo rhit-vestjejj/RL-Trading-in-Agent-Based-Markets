@@ -20,7 +20,7 @@ import numpy as np
 import pandas as pd
 
 PAPER_DIR = Path("Persistent_One_Sided_Order_Books_from_Learned_Trading_Behavior_smaller")
-DEFAULT_EXPERIMENT = "experiments/paper_trained_nocap"
+DEFAULT_EXPERIMENT = "experiments/regen_headline_taker"
 
 # ── Simulation parameters (from config.py / SimulationConfig defaults) ──────
 NOISE_WAKE_SEC = 5.0       # noise_wake_up_frequency

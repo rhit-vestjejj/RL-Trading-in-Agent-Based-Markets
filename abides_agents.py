@@ -1124,6 +1124,7 @@ class BaseRLTrader(ABIDESPollingTrader):
         self.total_passive_bid_orders_submitted = 0
         self.total_passive_ask_orders_submitted = 0
         self.total_passive_executed_quantity = 0
+        self._consecutive_hold_streak: int = 0
 
     def on_observation(self, observation: ABIDESObservation) -> None:
         if observation.midprice is None:
@@ -1142,9 +1143,14 @@ class BaseRLTrader(ABIDESPollingTrader):
             "passive_fill_bonus": 0.0,
             "two_sided_quote_reward": 0.0,
             "missing_quote_penalty": 0.0,
+            "anti_degeneracy_penalty": 0.0,
             "reward": 0.0,
         }
         previous_action = self.last_effective_action
+        if previous_action == 1:
+            self._consecutive_hold_streak += 1
+        else:
+            self._consecutive_hold_streak = 0
         inventory_delta = 0.0
         cash_delta = 0.0
         passive_fill_quantity = 0.0
@@ -1167,6 +1173,7 @@ class BaseRLTrader(ABIDESPollingTrader):
                 has_resting_bid=resting_bid_before,
                 has_resting_ask=resting_ask_before,
                 quote_reward_eligible=self._quote_reward_eligible(),
+                hold_streak=self._consecutive_hold_streak,
             )
             reward_cents = float(reward_components["reward"])
 
@@ -1246,6 +1253,10 @@ class BaseRLTrader(ABIDESPollingTrader):
             "missing_quote_penalty_since_last_decision": float(
                 reward_components["missing_quote_penalty"]
             ),
+            "anti_degeneracy_penalty_since_last_decision": float(
+                reward_components.get("anti_degeneracy_penalty", 0.0)
+            ),
+            "consecutive_hold_streak": int(self._consecutive_hold_streak),
             "submitted_passive_bid_order_count": float(submitted_passive_bid),
             "submitted_passive_ask_order_count": float(submitted_passive_ask),
             "submitted_passive_order_count": float(submitted_passive_bid + submitted_passive_ask),
@@ -1477,7 +1488,7 @@ class BaseRLTrader(ABIDESPollingTrader):
         raise NotImplementedError
 
     def _build_state(self, observation: ABIDESObservation) -> np.ndarray:
-        from agents.base import MarketObservation as PrototypeObservation
+        from env import MarketObservation as PrototypeObservation
 
         history_length = max(self.environment.return_window, 1)
         return_history = np.array(list(self.return_history)[-history_length:], dtype=float)

@@ -337,13 +337,18 @@ def _write_note(
 
 
 def main() -> None:
-    experiments_root = _locate_experiments_root()
+    experiments_root = Path("experiments")
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
-    nocap_bundle = ExperimentBundle("no_cap", experiments_root / "paper_trained_nocap/phi_sweep_summary.csv")
-    cap50_bundle = ExperimentBundle("cap_50", experiments_root / "paper_trained_cap50/phi_sweep_summary.csv")
-    cap20_bundle = ExperimentBundle("cap_20", experiments_root / "paper_trained_cap20/phi_sweep_summary.csv")
+    # New regenerated experiment directories
+    nocap_bundle = ExperimentBundle("no_cap", experiments_root / "regen_headline_taker/phi_sweep_summary.csv")
+    cap50_bundle = ExperimentBundle("cap_50", experiments_root / "regen_cap50/phi_sweep_summary.csv")
+    cap20_bundle = ExperimentBundle("cap_20", experiments_root / "regen_cap20/phi_sweep_summary.csv")
     inventory_comparison_md = experiments_root / "paper_inventory_cap_comparison/inventory_cap_comparison.md"
+
+    for bundle in (nocap_bundle, cap50_bundle, cap20_bundle):
+        if not bundle.summary_csv.exists():
+            raise SystemExit(f"Missing summary: {bundle.summary_csv}")
 
     nocap_summary = _load_summary(nocap_bundle.summary_csv)
     cap_summaries = {
@@ -388,6 +393,15 @@ def main() -> None:
         clip_min=0.0,
         clip_max=1.0,
     )
+    _plot_inventory_cap_metric(
+        cap_summaries,
+        "max_consecutive_one_sided_duration",
+        evaluation_mode="greedy",
+        title="Max Consecutive One-Sided Duration vs $\\phi$ by Inventory Cap",
+        ylabel="Seconds",
+        output_path=OUTPUT_DIR / "figure10.png",
+        clip_min=0.0,
+    )
     _plot_shutdown_support(nocap_summary, OUTPUT_DIR / "phi_0_5_shutdown_support.png")
 
     _write_note(
@@ -398,6 +412,23 @@ def main() -> None:
         cap20_bundle=cap20_bundle,
         inventory_comparison_md=inventory_comparison_md,
     )
+
+    # Copy figures to paper directory
+    import shutil
+    paper_dir = Path("Persistent_One_Sided_Order_Books_from_Learned_Trading_Behavior_smaller")
+    if paper_dir.exists():
+        for fname in [
+            "one_sided_book_fraction_with_ci_vs_phi.png",
+            "undefined_midprice_fraction_with_ci_vs_phi.png",
+            "max_consecutive_one_sided_duration_with_ci_vs_phi.png",
+            "inventory_cap_one_sided_fraction_with_ci_vs_phi.png",
+            "figure10.png",
+            "phi_0_5_shutdown_support.png",
+        ]:
+            src = OUTPUT_DIR / fname
+            if src.exists():
+                shutil.copy(src, paper_dir / fname)
+                print(f"  copied {fname} → paper dir")
 
 
 if __name__ == "__main__":

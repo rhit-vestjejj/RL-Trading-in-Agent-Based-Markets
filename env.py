@@ -7,7 +7,23 @@ from typing import Dict, Protocol
 
 import numpy as np
 
-from agents.base import MarketObservation
+
+@dataclass(frozen=True)
+class MarketObservation:
+    """State snapshot provided to agents at each decision point."""
+
+    time: int
+    best_bid: float
+    best_ask: float
+    bid_depth: int
+    ask_depth: int
+    midprice: float
+    spread: float
+    imbalance: float
+    fundamental_value: float
+    midprice_history: np.ndarray
+    return_history: np.ndarray
+    tick_size: float
 
 
 class RLPolicy(Protocol):
@@ -103,6 +119,8 @@ class RLMarketEnvironment:
     passive_fill_reward: float = 0.0
     two_sided_quote_reward: float = 0.0
     missing_quote_penalty: float = 0.0
+    hold_streak_grace: int = 0
+    hold_streak_penalty_per_step: float = 0.0
 
     def build_state(self, observation: MarketObservation, inventory: int) -> np.ndarray:
         """Return the fixed-length RL state vector.
@@ -156,6 +174,7 @@ class RLMarketEnvironment:
         has_resting_bid: bool = False,
         has_resting_ask: bool = False,
         quote_reward_eligible: bool = False,
+        hold_streak: int = 0,
     ) -> dict[str, float]:
         """Return reward components in the simulator's native currency units.
 
@@ -188,6 +207,13 @@ class RLMarketEnvironment:
             if quote_reward_eligible and not (bool(has_resting_bid) and bool(has_resting_ask))
             else 0.0
         )
+        anti_degeneracy_penalty = (
+            float(self.hold_streak_penalty_per_step)
+            * self.currency_scale
+            * max(0, int(hold_streak) - int(self.hold_streak_grace))
+            if previous_action == 1
+            else 0.0
+        )
         reward = (
             wealth_delta
             - inventory_penalty
@@ -195,6 +221,7 @@ class RLMarketEnvironment:
             + passive_fill_bonus
             + two_sided_quote_reward
             - missing_quote_penalty
+            - anti_degeneracy_penalty
         )
         return {
             "wealth_delta": float(wealth_delta),
@@ -203,5 +230,6 @@ class RLMarketEnvironment:
             "passive_fill_bonus": float(passive_fill_bonus),
             "two_sided_quote_reward": float(two_sided_quote_reward),
             "missing_quote_penalty": float(missing_quote_penalty),
+            "anti_degeneracy_penalty": float(anti_degeneracy_penalty),
             "reward": float(reward),
         }

@@ -16,7 +16,7 @@ import pandas as pd
 
 from analysis import log_returns, one_sided_book_metrics, summarize_market_frame
 from baseline_configs import OFFICIAL_BASELINE_NAME, build_abides_rmsc04_small_v1_config
-from config import MAX_PHI
+from config import MAX_PHI, get_market_profile
 from ppo_training import (
     PPOHyperparameters,
     SharedLinearPPOPolicy,
@@ -182,13 +182,17 @@ def _summarize_numeric_series(series: pd.Series) -> dict[str, float]:
 
     std_value = float(numeric.std(ddof=1))
     stderr_value = float(std_value / np.sqrt(sample_size))
-    ci_half_width = float(1.96 * stderr_value)
+    rng = np.random.default_rng(seed=42)
+    bootstrap_means = [
+        float(np.mean(rng.choice(numeric.values, size=sample_size, replace=True)))
+        for _ in range(2000)
+    ]
     return {
         "mean": mean_value,
         "std": std_value,
         "stderr": stderr_value,
-        "ci95_lower": float(mean_value - ci_half_width),
-        "ci95_upper": float(mean_value + ci_half_width),
+        "ci95_lower": float(np.percentile(bootstrap_means, 2.5)),
+        "ci95_upper": float(np.percentile(bootstrap_means, 97.5)),
         "n": float(sample_size),
     }
 
@@ -739,6 +743,7 @@ def run_phi_experiment(
     lambda_q: float = 0.01,
     flat_hold_penalty: float = 0.02,
     inventory_cap: int | None = None,
+    market_profile: str = OFFICIAL_BASELINE_NAME,
     rl_liquidity_mode: str = "taker_only",
     rl_quoter_split: float = 0.5,
     rl_enable_passive_quotes: bool = True,
@@ -761,9 +766,10 @@ def run_phi_experiment(
         raise ValueError("evaluation_seeds must not be empty.")
     if not evaluation_modes:
         raise ValueError("evaluation_modes must not be empty.")
+    profile_max_phi = get_market_profile(market_profile).max_phi
     for phi in phi_grid:
-        if float(phi) < 0.0 or float(phi) > MAX_PHI:
-            raise ValueError(f"phi={phi} is outside the allowed range [0.0, {MAX_PHI:.4f}].")
+        if float(phi) < 0.0 or float(phi) > profile_max_phi:
+            raise ValueError(f"phi={phi} is outside the allowed range [0.0, {profile_max_phi:.4f}].")
 
     root = Path(output_dir)
     config_dir = root / "config"
@@ -777,7 +783,7 @@ def run_phi_experiment(
     effective_hyperparameters = hyperparameters or PPOHyperparameters()
     experiment_config = {
         "timestamp": datetime.now().isoformat(),
-        "market_profile": OFFICIAL_BASELINE_NAME,
+        "market_profile": market_profile,
         "phi_grid": [float(phi) for phi in phi_grid],
         "episodes": int(episodes),
         "start_seed": int(start_seed),
@@ -833,6 +839,7 @@ def run_phi_experiment(
         phi_config_builder = build_abides_rmsc04_small_v1_config(
             phi=phi_value,
             num_agents=num_agents,
+            market_profile=market_profile,
             end_time=end_time,
             log_frequency=log_frequency,
             return_window=return_window,
@@ -871,6 +878,7 @@ def run_phi_experiment(
                 config_factory=build_abides_rmsc04_small_v1_config,
                 config_overrides={
                     "num_agents": num_agents,
+                    "market_profile": market_profile,
                     "end_time": end_time,
                     "log_frequency": log_frequency,
                     "return_window": return_window,
@@ -946,6 +954,7 @@ def run_phi_experiment(
                         phi=phi_value,
                         seed=int(seed),
                         num_agents=num_agents,
+                        market_profile=market_profile,
                         end_time=end_time,
                         log_frequency=log_frequency,
                         return_window=return_window,

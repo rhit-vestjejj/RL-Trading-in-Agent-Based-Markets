@@ -75,7 +75,14 @@ def _infer_time_step_seconds(frame: pd.DataFrame) -> float:
     positive_diffs = diffs[diffs > 0]
     if positive_diffs.size == 0:
         return float("nan")
-    return float(np.median(positive_diffs) / 1_000_000_000.0)
+    # Use str_to_ns("1s") rather than 1e9 so this is correct under both
+    # pandas 2.x (nanoseconds: 1e9) and pandas 3.x (microseconds: 1e6).
+    try:
+        from abides_core.utils import str_to_ns as _str_to_ns
+        one_second = float(_str_to_ns("1s"))
+    except Exception:
+        one_second = 1_000_000_000.0
+    return float(np.median(positive_diffs) / one_second)
 
 
 def one_sided_book_metrics(frame: pd.DataFrame) -> dict[str, float]:

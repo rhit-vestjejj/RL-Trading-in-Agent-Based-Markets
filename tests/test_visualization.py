@@ -18,9 +18,11 @@ class VisualizationTests(unittest.TestCase):
 
     @staticmethod
     def sample_frame() -> pd.DataFrame:
+        from abides_core.utils import str_to_ns as _s2ns
+        _sec = _s2ns("1s")
         return pd.DataFrame(
             {
-                "time": [0, 1_000_000_000, 2_000_000_000, 3_000_000_000],
+                "time": [0, _sec, 2*_sec, 3*_sec],
                 "midprice": [100.0, 100.1, 100.05, 100.2],
                 "fundamental_value": [100.0, 100.02, 100.04, 100.06],
                 "spread": [0.02, 0.02, 0.03, 0.02],

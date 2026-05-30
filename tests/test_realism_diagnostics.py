@@ -18,9 +18,11 @@ class RealismDiagnosticsTests(unittest.TestCase):
     """Realism diagnostics should flag obvious pathologies on synthetic data."""
 
     def test_compute_and_flag_pathologies(self) -> None:
+        from abides_core.utils import str_to_ns as _s2ns
+        _sec = _s2ns("1s")
         frame = pd.DataFrame(
             {
-                "time": [0, 1_000_000_000, 2_000_000_000, 3_000_000_000],
+                "time": [0, _sec, 2*_sec, 3*_sec],
                 "best_bid": [99.99, 99.98, 99.97, 99.96],
                 "best_ask": [100.00, 100.00, 99.99, 99.98],
                 "midprice": [100.0, 98.0, 92.0, 85.0],
@@ -102,9 +104,11 @@ class RealismDiagnosticsTests(unittest.TestCase):
         self.assertIn("Fraction traded volume against MM quotes", report)
 
     def test_signed_flow_lag1_uses_true_temporal_alignment(self) -> None:
+        from abides_core.utils import str_to_ns as _s2ns
+        _sec = _s2ns("1s")
         frame = pd.DataFrame(
             {
-                "time": [0, 1_000_000_000, 2_000_000_000, 3_000_000_000],
+                "time": [0, _sec, 2*_sec, 3*_sec],
                 "best_bid": [99.99, 100.00, 99.99, 100.00],
                 "best_ask": [100.00, 100.02, 100.00, 100.02],
                 "midprice": [100.0, 100.1, 100.0, 100.1],

@@ -23,7 +23,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
 PAPER_DIR = Path("Persistent_One_Sided_Order_Books_from_Learned_Trading_Behavior_smaller")
-DATA = Path("experiments/more_seeds/merged_market_metrics.csv")
+DATA = Path("experiments/regen_headline_taker/summaries/per_seed_market_metrics.csv")
 
 
 def aggregate(df: pd.DataFrame, metric: str) -> pd.DataFrame:
@@ -111,8 +111,8 @@ def plot_missing_bid_only(df: pd.DataFrame, out_path: Path) -> None:
                   out_path=out_path)
 
 
-ALT_DATA = Path("experiments/alt_profile_200ep_6seed/combined/phi_sweep_summary.csv")
-PRIMARY_DATA = Path("experiments/paper_trained_nocap/phi_sweep_summary.csv")
+ALT_DATA = Path("experiments/regen_alt_profile/phi_sweep_summary.csv")
+PRIMARY_DATA = Path("experiments/regen_headline_taker/phi_sweep_summary.csv")
 
 
 def plot_alt_profile_comparison() -> None:
@@ -196,6 +196,18 @@ def main() -> None:
 
     plot_missing_bid_only(df, PAPER_DIR / "figure8.png")
     plot_missing_sides_combined(df, PAPER_DIR / "figure_both_test.png")
+
+    # figure4.png — P90 one-sided episode duration vs phi
+    plot_two_mode(df, "one_sided_episode_duration_p90_seconds",
+                  ylabel="P90 episode duration (seconds)",
+                  title="P90 One-Sided Episode Duration vs Phi (6 seeds)",
+                  out_path=PAPER_DIR / "figure4.png")
+
+    # updated_one_sided_fraction.png — headline metric (replaces old multi-seed figure)
+    plot_two_mode(df, "one_sided_book_fraction",
+                  ylabel="One-sided book fraction",
+                  title="One-Sided Book Fraction vs Phi (6 seeds)",
+                  out_path=PAPER_DIR / "updated_one_sided_fraction.png")
 
     plot_alt_profile_comparison()
 

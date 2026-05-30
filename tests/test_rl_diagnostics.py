@@ -24,9 +24,11 @@ from rl_diagnostics import (
 
 class RLRunDiagnosticsTests(unittest.TestCase):
     def test_spread_gap_diagnosis_identifies_true_one_sided_book(self) -> None:
+        from abides_core.utils import str_to_ns as _s2ns
+        _sec = _s2ns("1s")
         frame = pd.DataFrame(
             {
-                "time": [0, 1_000_000_000, 2_000_000_000],
+                "time": [0, _sec, 2*_sec],
                 "best_bid": [100.0, 100.0, float("nan")],
                 "best_ask": [100.01, float("nan"), 100.02],
                 "spread": [0.01, float("nan"), float("nan")],
@@ -45,9 +47,11 @@ class RLRunDiagnosticsTests(unittest.TestCase):
         self.assertEqual(diagnostics["num_one_sided_episodes"], 1.0)
 
     def test_spread_gap_diagnosis_skips_empty_book_from_one_sided_fraction(self) -> None:
+        from abides_core.utils import str_to_ns as _s2ns
+        _sec = _s2ns("1s")
         frame = pd.DataFrame(
             {
-                "time": [0, 1_000_000_000, 2_000_000_000],
+                "time": [0, _sec, 2*_sec],
                 "best_bid": [100.0, float("nan"), 100.0],
                 "best_ask": [100.01, float("nan"), float("nan")],
                 "spread": [0.01, float("nan"), float("nan")],
@@ -64,9 +68,11 @@ class RLRunDiagnosticsTests(unittest.TestCase):
         self.assertAlmostEqual(diagnostics["one_sided_metric_valid_timestep_count"], 2.0)
 
     def test_spread_gap_diagnosis_flags_defined_midprice_despite_missing_side(self) -> None:
+        from abides_core.utils import str_to_ns as _s2ns
+        _sec = _s2ns("1s")
         frame = pd.DataFrame(
             {
-                "time": [0, 1_000_000_000],
+                "time": [0, _sec],
                 "best_bid": [100.0, 100.0],
                 "best_ask": [100.01, float("nan")],
                 "spread": [0.01, float("nan")],
@@ -84,9 +90,11 @@ class RLRunDiagnosticsTests(unittest.TestCase):
         self.assertGreater(diagnostics["excess_kurtosis_full"], diagnostics["excess_kurtosis_nonzero_only"])
 
     def test_rl_run_report_mentions_one_sided_book_and_rl_flow(self) -> None:
+        from abides_core.utils import str_to_ns as _s2ns
+        _sec = _s2ns("1s")
         frame = pd.DataFrame(
             {
-                "time": [0, 1_000_000_000, 2_000_000_000],
+                "time": [0, _sec, 2*_sec],
                 "best_bid": [100.0, 100.0, float("nan")],
                 "best_ask": [100.01, float("nan"), 100.02],
                 "spread": [0.01, float("nan"), float("nan")],
@@ -213,9 +221,11 @@ class RLRunDiagnosticsTests(unittest.TestCase):
         self.assertGreater(diagnostics["hold_minus_best_trade_reward_gap"], 0.0)
 
     def test_policy_evaluation_report_mentions_missing_cap_and_sell_choice(self) -> None:
+        from abides_core.utils import str_to_ns as _s2ns
+        _sec = _s2ns("1s")
         frame = pd.DataFrame(
             {
-                "time": [0, 1_000_000_000],
+                "time": [0, _sec],
                 "best_bid": [100.0, 100.0],
                 "best_ask": [100.01, 100.01],
                 "spread": [0.01, 0.01],

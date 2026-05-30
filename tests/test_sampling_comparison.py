@@ -24,10 +24,12 @@ class SamplingComparisonTests(unittest.TestCase):
 
     @staticmethod
     def synthetic_frames() -> dict[str, pd.DataFrame]:
+        from abides_core.utils import str_to_ns as _s2ns
+        _sec = _s2ns("1s")
         return {
             "1s": pd.DataFrame(
                 {
-                    "time": [0, 1_000_000_000, 2_000_000_000, 3_000_000_000],
+                    "time": [0, _sec, 2*_sec, 3*_sec],
                     "midprice": [100.0, 100.1, 99.9, 100.2],
                     "spread": [0.02, 0.03, 0.02, 0.04],
                     "bid_depth": [5.0, 6.0, 4.0, 7.0],

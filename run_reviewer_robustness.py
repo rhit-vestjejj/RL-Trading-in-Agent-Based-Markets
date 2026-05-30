@@ -27,7 +27,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--trained-experiment-dir",
         type=str,
-        default="experiments/mixed_full_reward_shaped",
+        default="experiments/paper_trained_nocap",
         help="Existing phi sweep containing phi_*/checkpoints/shared_ppo_policy_final.npz.",
     )
     parser.add_argument(

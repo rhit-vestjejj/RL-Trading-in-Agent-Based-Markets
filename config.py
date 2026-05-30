@@ -197,6 +197,8 @@ class SimulationConfig:
     fundamental_update_frequency: str = "1s"
     lambda_q: float = 0.01
     flat_hold_penalty: float = 0.0
+    hold_streak_grace: int = 0
+    hold_streak_penalty_per_step: float = 0.0
     inventory_cap: int | None = None
     return_window: int = 10
     rl_order_size: int = 1

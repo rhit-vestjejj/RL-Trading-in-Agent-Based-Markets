@@ -62,6 +62,8 @@ class MarketSimulator:
             return_window=config.return_window,
             lambda_q=config.lambda_q,
             flat_hold_penalty=config.flat_hold_penalty,
+            hold_streak_grace=config.hold_streak_grace,
+            hold_streak_penalty_per_step=config.hold_streak_penalty_per_step,
             passive_fill_reward=config.rl_passive_fill_reward,
             two_sided_quote_reward=config.rl_two_sided_quote_reward,
             missing_quote_penalty=config.rl_missing_quote_penalty,
@@ -143,7 +145,7 @@ class MarketSimulator:
         counts = self._adjust_agent_counts(self.config.agent_counts())
         rl_role_counts = self.config.rl_role_counts()
 
-        date_ns = int(pd.to_datetime(self.config.date).to_datetime64())
+        date_ns = int(pd.to_datetime(self.config.date).to_datetime64().astype("int64"))
         market_open = date_ns + str_to_ns(self.config.market_open_time)
         market_close = date_ns + str_to_ns(self.config.end_time)
         tick_size_cents = max(1, int(round(self.config.tick_size * 100)))

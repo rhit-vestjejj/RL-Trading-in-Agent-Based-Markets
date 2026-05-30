@@ -2,71 +2,74 @@
 \providecommand\hyper@newdestlabel[2]{}
 \providecommand\HyField@AuxAddToFields[1]{}
 \providecommand\HyField@AuxAddToCoFields[2]{}
+\citation{spooner2018,nevmyvaka2006}
+\citation{balch2019}
+\citation{lussange2024}
+\citation{farmer2009,boe2018,imf2023}
+\citation{byrd2020}
+\citation{byrd2020}
 \@writefile{toc}{\contentsline {section}{Abstract}{1}{section*.1}\protected@file@percent }
 \@writefile{toc}{\contentsline {section}{\numberline {1}Introduction}{1}{section.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {2}Methods / Environment Setup}{2}{section.2}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {2.1}Market Environment}{2}{subsection.2.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {2.2}Control Parameters: RL Participation}{2}{subsection.2.2}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {2.3}Agent Roles and Liquidity Provision}{2}{subsection.2.3}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {2.4}RL Liquidity Provision Modes}{2}{subsection.2.4}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {2.5}RL Action and State Space}{2}{subsection.2.5}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {2.6}Reward Function}{2}{subsection.2.6}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {2.7}Inventory Constraints}{3}{subsection.2.7}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {2.8}Anti-Degeneracy Intervention}{3}{subsection.2.8}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {2.9}Definition of One-Sided Order Book States}{3}{subsection.2.9}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {2.10}Experiment Protocol}{3}{subsection.2.10}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {3}Results}{3}{section.3}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.1}Emergence of One-Sided Order Book States}{3}{subsection.3.1}\protected@file@percent }
-\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces One-Sided Order Book Fraction vs $\phi $. Fraction of timesteps in which the order book is one-sided, meaning either the best bid or best ask is missing, as a function of $\phi $ for both greedy and stochastic evaluation modes, with 95\% confidence intervals across six evaluation seeds.}}{3}{figure.caption.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {2}Methods}{1}{section.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.1}Market Environment and RL Participation}{1}{subsection.2.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.2}RL Liquidity Provision Modes}{1}{subsection.2.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.3}RL Agent Design}{1}{subsection.2.3}\protected@file@percent }
+\newlabel{eq:reward}{{1}{1}{RL Agent Design}{equation.2.1}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {1}{\ignorespaces PPO training hyperparameters.}}{2}{table.caption.5}\protected@file@percent }
 \providecommand*\caption@xref[2]{\@setref\relax\@undefined{#1}}
-\newlabel{fig:one-sided-book}{{1}{3}{One-Sided Order Book Fraction vs $\phi $. Fraction of timesteps in which the order book is one-sided, meaning either the best bid or best ask is missing, as a function of $\phi $ for both greedy and stochastic evaluation modes, with 95\% confidence intervals across six evaluation seeds}{figure.caption.3}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces Undefined Mid-price Fraction vs $\phi $. Fraction of timesteps in which the mid-price is undefined due to the absence of either the best bid or best ask, with uncertainty shown across runs.}}{4}{figure.caption.4}\protected@file@percent }
-\newlabel{fig:undefined-midprice}{{2}{4}{Undefined Mid-price Fraction vs $\phi $. Fraction of timesteps in which the mid-price is undefined due to the absence of either the best bid or best ask, with uncertainty shown across runs}{figure.caption.4}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.2}Evidence That $\phi = 0.5$ Reflects Shutdown Rather Than Recovery}{4}{subsection.3.2}\protected@file@percent }
-\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces Evidence that $\phi = 0.5$ is shutdown-like rather than a liquidity recovery. The drop in one-sided-book failures coincides with sharply higher inactivity, sharply higher zero-return behavior, and collapsed quote activity.}}{4}{figure.caption.5}\protected@file@percent }
-\newlabel{fig:shutdown-support}{{3}{4}{Evidence that $\phi = 0.5$ is shutdown-like rather than a liquidity recovery. The drop in one-sided-book failures coincides with sharply higher inactivity, sharply higher zero-return behavior, and collapsed quote activity}{figure.caption.5}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.3}Effects of RL Liquidity Provision Modes}{4}{subsection.3.3}\protected@file@percent }
-\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces One-Sided Order Book Fraction vs $\phi $ by Liquidity Mode. Comparison between taker-only and mixed configurations.}}{4}{figure.caption.6}\protected@file@percent }
-\newlabel{fig:liquidity-modes}{{4}{4}{One-Sided Order Book Fraction vs $\phi $ by Liquidity Mode. Comparison between taker-only and mixed configurations}{figure.caption.6}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.4}Persistence of One-Sided States}{4}{subsection.3.4}\protected@file@percent }
-\@writefile{lof}{\contentsline {figure}{\numberline {5}{\ignorespaces Max Consecutive One-Sided Duration vs $\phi $. Maximum length of consecutive one-sided order book states observed during each simulation, with uncertainty shown across runs.}}{5}{figure.caption.7}\protected@file@percent }
-\newlabel{fig:max-consecutive-duration}{{5}{5}{Max Consecutive One-Sided Duration vs $\phi $. Maximum length of consecutive one-sided order book states observed during each simulation, with uncertainty shown across runs}{figure.caption.7}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {6}{\ignorespaces P90 One-Sided Episode Duration vs $\phi $. 90th percentile duration of one-sided episodes, indicating the persistence of liquidity failures.}}{5}{figure.caption.8}\protected@file@percent }
-\newlabel{fig:p90-duration}{{6}{5}{P90 One-Sided Episode Duration vs $\phi $. 90th percentile duration of one-sided episodes, indicating the persistence of liquidity failures}{figure.caption.8}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.5}Mechanism}{5}{subsection.3.5}\protected@file@percent }
-\@writefile{lof}{\contentsline {figure}{\numberline {7}{\ignorespaces RL Action Fractions vs $\phi $. Distributions of buy, sell, and hold actions for RL agents under greedy and stochastic evaluation modes.}}{5}{figure.caption.9}\protected@file@percent }
-\newlabel{fig:action-fractions}{{7}{5}{RL Action Fractions vs $\phi $. Distributions of buy, sell, and hold actions for RL agents under greedy and stochastic evaluation modes}{figure.caption.9}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {8}{\ignorespaces Inactivity Fraction vs $\phi $. Fraction of timesteps in which agents select the hold action, indicating reduced participation.}}{5}{figure.caption.10}\protected@file@percent }
-\newlabel{fig:inactivity-standalone}{{8}{5}{Inactivity Fraction vs $\phi $. Fraction of timesteps in which agents select the hold action, indicating reduced participation}{figure.caption.10}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.6}Analytical Threshold}{5}{subsection.3.6}\protected@file@percent }
-\@writefile{lof}{\contentsline {figure}{\numberline {9}{\ignorespaces Analytical threshold $\phi ^*$ vs.\ empirical one-sided book fraction. Left: aggregate consumption rate $C(\phi )$ and provision rate $P(\phi )$ cross at $\phi ^* \approx 0.30$ (shaded band shows uncertainty from $\lambda _r$ estimates). Right: empirical one-sided fraction with the predicted threshold overlaid; the sharp empirical rise aligns with the crossing point.}}{6}{figure.caption.11}\protected@file@percent }
-\newlabel{fig:threshold}{{9}{6}{Analytical threshold $\phi ^*$ vs.\ empirical one-sided book fraction. Left: aggregate consumption rate $C(\phi )$ and provision rate $P(\phi )$ cross at $\phi ^* \approx 0.30$ (shaded band shows uncertainty from $\lambda _r$ estimates). Right: empirical one-sided fraction with the predicted threshold overlaid; the sharp empirical rise aligns with the crossing point}{figure.caption.11}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.7}Effects of Inventory Constraints}{6}{subsection.3.7}\protected@file@percent }
-\@writefile{lof}{\contentsline {figure}{\numberline {10}{\ignorespaces One-Sided Order Book Fraction vs $\phi $ by Inventory Cap. Comparison of one-sided order book frequency under different inventory constraint levels, with uncertainty shown across runs.}}{6}{figure.caption.12}\protected@file@percent }
-\newlabel{fig:inventory-cap-frequency}{{10}{6}{One-Sided Order Book Fraction vs $\phi $ by Inventory Cap. Comparison of one-sided order book frequency under different inventory constraint levels, with uncertainty shown across runs}{figure.caption.12}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {11}{\ignorespaces Max Consecutive One-Sided Duration vs $\phi $ by Inventory Cap. Maximum duration of one-sided states under different inventory constraint levels.}}{6}{figure.caption.13}\protected@file@percent }
-\newlabel{fig:inventory-cap-duration}{{11}{6}{Max Consecutive One-Sided Duration vs $\phi $ by Inventory Cap. Maximum duration of one-sided states under different inventory constraint levels}{figure.caption.13}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.8}Trained Policies vs Random Baseline}{6}{subsection.3.8}\protected@file@percent }
-\@writefile{lof}{\contentsline {figure}{\numberline {12}{\ignorespaces One-Sided Order Book Fraction vs $\phi $ by Policy Type. Comparison between trained RL policies and random baseline agents.}}{7}{figure.caption.14}\protected@file@percent }
-\newlabel{fig:policy-type}{{12}{7}{One-Sided Order Book Fraction vs $\phi $ by Policy Type. Comparison between trained RL policies and random baseline agents}{figure.caption.14}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.9}Summary of Findings}{7}{subsection.3.9}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {4}Discussion}{7}{section.4}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {5}Limitations}{8}{section.5}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {5.1}Simulation Environment}{8}{subsection.5.1}\protected@file@percent }
-\@writefile{lof}{\contentsline {figure}{\numberline {13}{\ignorespaces Alternative Market Profile Robustness Check. One-sided book fraction vs $\phi $ under the primary configuration (RMSC04: 80 noise traders, 2 market makers) and the alternative configuration (ZIC: 51 ZIC traders, 15 market makers). The alternative profile produces zero one-sided failures across all $\phi $ values, demonstrating that the failure mode depends on limited market maker coverage.}}{8}{figure.caption.15}\protected@file@percent }
-\newlabel{fig:alt-profile-comparison}{{13}{8}{Alternative Market Profile Robustness Check. One-sided book fraction vs $\phi $ under the primary configuration (RMSC04: 80 noise traders, 2 market makers) and the alternative configuration (ZIC: 51 ZIC traders, 15 market makers). The alternative profile produces zero one-sided failures across all $\phi $ values, demonstrating that the failure mode depends on limited market maker coverage}{figure.caption.15}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {5.2}Restricted Agent Behavior}{8}{subsection.5.2}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {5.3}Policy and Reward Design Dependence}{8}{subsection.5.3}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {5.4}Limited Exploration of Parameter Space}{9}{subsection.5.4}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {5.5}Interpretation of One-Sided States}{9}{subsection.5.5}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {5.6}External Validity and Real-World Implications}{9}{subsection.5.6}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {6}Conclusion}{9}{section.6}\protected@file@percent }
+\newlabel{tab:hyperparams}{{1}{2}{PPO training hyperparameters}{table.caption.5}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.4}One-Sided Order Book Definition}{2}{subsection.2.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.5}Experiment Protocol}{2}{subsection.2.5}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {2}{\ignorespaces Experiment protocol.}}{2}{table.caption.6}\protected@file@percent }
+\newlabel{tab:protocol}{{2}{2}{Experiment protocol}{table.caption.6}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {3}Results}{2}{section.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.1}Emergence and Persistence of One-Sided States}{2}{subsection.3.1}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces One-sided order book fraction vs.\ $\phi $ for greedy and stochastic evaluation. Error bars: 95\% bootstrap CIs over 12 evaluation runs.}}{2}{figure.caption.7}\protected@file@percent }
+\newlabel{fig:one-sided-book}{{1}{2}{One-sided order book fraction vs.\ $\phi $ for greedy and stochastic evaluation. Error bars: 95\% bootstrap CIs over 12 evaluation runs}{figure.caption.7}{}}
+\newlabel{fig:max-consecutive-duration}{{2a}{2}{Max consecutive duration}{figure.caption.8}{}}
+\newlabel{sub@fig:max-consecutive-duration}{{a}{2}{Max consecutive duration}{figure.caption.8}{}}
+\newlabel{fig:p90-duration}{{2b}{2}{P90 episode duration}{figure.caption.8}{}}
+\newlabel{sub@fig:p90-duration}{{b}{2}{P90 episode duration}{figure.caption.8}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces Persistence of one-sided states. Both the maximum consecutive duration (left) and 90th-percentile episode length (right) spike sharply at $\phi = 0.30$--$0.40$.}}{2}{figure.caption.8}\protected@file@percent }
+\newlabel{fig:duration}{{2}{2}{Persistence of one-sided states. Both the maximum consecutive duration (left) and 90th-percentile episode length (right) spike sharply at $\phi = 0.30$--$0.40$}{figure.caption.8}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces Evidence that $\phi = 0.5$ is a market shutdown rather than liquidity recovery. The drop in one-sided-book failures coincides with near-total inactivity, zero-return behavior, and collapsed quote activity.}}{3}{figure.caption.9}\protected@file@percent }
+\newlabel{fig:shutdown-support}{{3}{3}{Evidence that $\phi = 0.5$ is a market shutdown rather than liquidity recovery. The drop in one-sided-book failures coincides with near-total inactivity, zero-return behavior, and collapsed quote activity}{figure.caption.9}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.2}Side-Specific Liquidity Failures}{3}{subsection.3.2}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces Missing best-bid and missing best-ask fractions vs.\ $\phi $ (greedy and stochastic evaluation). The ask side fails predominantly, revealing a buy-bias in the learned policy that systematically depletes ask-side liquidity.}}{4}{figure.caption.10}\protected@file@percent }
+\newlabel{fig:liquidity-modes}{{4}{4}{Missing best-bid and missing best-ask fractions vs.\ $\phi $ (greedy and stochastic evaluation). The ask side fails predominantly, revealing a buy-bias in the learned policy that systematically depletes ask-side liquidity}{figure.caption.10}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.3}Analytical Threshold}{4}{subsection.3.3}\protected@file@percent }
+\citation{avellaneda2008}
+\@writefile{lof}{\contentsline {figure}{\numberline {5}{\ignorespaces Analytical threshold $\phi ^*$ vs.\ empirical one-sided fraction. Left: flow rates cross at $\phi ^* = 0.257$ (shaded band: uncertainty from $\lambda _r$ estimates). Right: empirical failure rate with predicted threshold overlaid; the sharp rise aligns with the crossing point.}}{5}{figure.caption.11}\protected@file@percent }
+\newlabel{fig:threshold}{{5}{5}{Analytical threshold $\phi ^*$ vs.\ empirical one-sided fraction. Left: flow rates cross at $\phi ^* = 0.257$ (shaded band: uncertainty from $\lambda _r$ estimates). Right: empirical failure rate with predicted threshold overlaid; the sharp rise aligns with the crossing point}{figure.caption.11}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.4}Effects of Inventory Constraints}{5}{subsection.3.4}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {6}{\ignorespaces One-sided book fraction vs.\ $\phi $ by inventory cap. Constraints substantially reduce failure frequency.}}{5}{figure.caption.12}\protected@file@percent }
+\newlabel{fig:inventory-cap-frequency}{{6}{5}{One-sided book fraction vs.\ $\phi $ by inventory cap. Constraints substantially reduce failure frequency}{figure.caption.12}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {7}{\ignorespaces Maximum consecutive one-sided duration vs.\ $\phi $ by inventory cap.}}{5}{figure.caption.13}\protected@file@percent }
+\newlabel{fig:inventory-cap-duration}{{7}{5}{Maximum consecutive one-sided duration vs.\ $\phi $ by inventory cap}{figure.caption.13}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.5}Trained Policies vs.\ Random Baseline}{5}{subsection.3.5}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {8}{\ignorespaces One-sided book fraction vs.\ $\phi $ by policy type. Both trained and random policies produce severe failures above the threshold; CIs overlap at $\phi =0.40$, confirming the effect is structural rather than policy-specific.}}{6}{figure.caption.14}\protected@file@percent }
+\newlabel{fig:policy-type}{{8}{6}{One-sided book fraction vs.\ $\phi $ by policy type. Both trained and random policies produce severe failures above the threshold; CIs overlap at $\phi =0.40$, confirming the effect is structural rather than policy-specific}{figure.caption.14}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.6}Robustness: Alternative Market Profile}{6}{subsection.3.6}\protected@file@percent }
+\bibstyle{ACM-Reference-Format}
+\bibdata{references}
+\bibcite{avellaneda2008}{{1}{2008}{{Avellaneda and Stoikov}}{{}}}
+\bibcite{balch2019}{{2}{2019}{{Balch et~al\mbox  {.}}}{{}}}
+\bibcite{boe2018}{{3}{2018}{{Bank of England}}{{}}}
+\bibcite{byrd2020}{{4}{2020}{{Byrd et~al\mbox  {.}}}{{}}}
+\bibcite{farmer2009}{{5}{2009}{{Farmer and Foley}}{{}}}
+\bibcite{imf2023}{{6}{2023}{{International Monetary Fund}}{{}}}
+\bibcite{lussange2024}{{7}{2024}{{Lussange et~al\mbox  {.}}}{{}}}
+\bibcite{nevmyvaka2006}{{8}{2006}{{Nevmyvaka et~al\mbox  {.}}}{{}}}
+\bibcite{spooner2018}{{9}{2018}{{Spooner et~al\mbox  {.}}}{{}}}
 \newlabel{tocindent-1}{0pt}
 \newlabel{tocindent0}{0pt}
-\newlabel{tocindent1}{4.62497pt}
-\newlabel{tocindent2}{16.44434pt}
+\newlabel{tocindent1}{4.185pt}
+\newlabel{tocindent2}{10.34999pt}
 \newlabel{tocindent3}{0pt}
-\newlabel{tocindent4}{0pt}
-\newlabel{tocindent5}{0pt}
-\newlabel{TotPages}{{10}{10}{}{page.10}{}}
-\gdef \@abspage@last{10}
+\@writefile{lof}{\contentsline {figure}{\numberline {9}{\ignorespaces Robustness check. Under the primary configuration (2 market makers) the failure emerges; under the alternative profile (15 market makers) no one-sided failures are observed at any tested $\phi $ value, consistent with the threshold prediction.}}{7}{figure.caption.15}\protected@file@percent }
+\newlabel{fig:alt-profile-comparison}{{9}{7}{Robustness check. Under the primary configuration (2 market makers) the failure emerges; under the alternative profile (15 market makers) no one-sided failures are observed at any tested $\phi $ value, consistent with the threshold prediction}{figure.caption.15}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {4}Discussion and Limitations}{7}{section.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {5}Conclusion}{7}{section.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{References}{7}{section*.17}\protected@file@percent }
+\newlabel{TotPages}{{7}{7}{}{page.7}{}}
+\gdef \@abspage@last{7}

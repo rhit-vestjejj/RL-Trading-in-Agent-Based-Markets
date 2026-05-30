@@ -21,9 +21,13 @@ from phi_experiment import (
 
 class PhiExperimentTests(unittest.TestCase):
     def test_compute_extended_market_metrics_includes_one_sided_book_stats(self) -> None:
+        # Use microsecond timestamps to match pandas 3.x ABIDES time unit
+        # (str_to_ns("1s") == 1_000_000 in pandas 3.x)
+        from abides_core.utils import str_to_ns
+        _one_sec = str_to_ns("1s")
         frame = pd.DataFrame(
             {
-                "time": [0, 1_000_000_000, 2_000_000_000, 3_000_000_000],
+                "time": [0, _one_sec, 2 * _one_sec, 3 * _one_sec],
                 "best_bid": [100.00, float("nan"), 100.01, 100.02],
                 "best_ask": [100.01, 100.02, float("nan"), 100.03],
                 "midprice": [100.005, float("nan"), float("nan"), 100.025],
@@ -49,9 +53,11 @@ class PhiExperimentTests(unittest.TestCase):
         self.assertAlmostEqual(metrics["num_one_sided_episodes"], 1.0)
 
     def test_compute_extended_market_metrics_skips_empty_book_states(self) -> None:
+        from abides_core.utils import str_to_ns
+        _one_sec = str_to_ns("1s")
         frame = pd.DataFrame(
             {
-                "time": [0, 1_000_000_000, 2_000_000_000],
+                "time": [0, _one_sec, 2 * _one_sec],
                 "best_bid": [100.00, float("nan"), 100.01],
                 "best_ask": [100.01, float("nan"), 100.02],
                 "midprice": [100.005, float("nan"), 100.015],
@@ -236,9 +242,11 @@ class PhiExperimentTests(unittest.TestCase):
             def agent_counts() -> dict[str, int]:
                 return {"RLTrader": 1}
 
+        from abides_core.utils import str_to_ns as _str_to_ns_local
+        _one_sec_local = _str_to_ns_local("1s")
         market_frame = pd.DataFrame(
             {
-                "time": [0, 1_000_000_000, 2_000_000_000],
+                "time": [0, _one_sec_local, 2 * _one_sec_local],
                 "best_bid": [100.00, 100.00, 100.01],
                 "best_ask": [100.01, float("nan"), 100.02],
                 "midprice": [100.005, 100.00, 100.015],
